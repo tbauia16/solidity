@@ -32,6 +32,7 @@
 #include <libsolidity/analysis/NameAndTypeResolver.h>
 #include <libsolidity/interface/Exceptions.h>
 #include <libsolidity/interface/CompilerStack.h>
+#include <libsolidity/interface/StandardCompiler.h>
 #include <libsolidity/interface/SourceReferenceFormatter.h>
 #include <libsolidity/interface/GasEstimator.h>
 #include <libsolidity/formal/Why3Translator.h>
@@ -102,6 +103,7 @@ static string const g_strSrcMapRuntime = "srcmap-runtime";
 static string const g_strVersion = "version";
 static string const g_stdinFileNameStr = "<stdin>";
 static string const g_strMetadataLiteral = "metadata-literal";
+static string const g_strStandardJSON = "standard-json";
 
 static string const g_argAbi = g_strAbi;
 static string const g_argAddStandard = g_strAddStandard;
@@ -131,6 +133,7 @@ static string const g_argSignatureHashes = g_strSignatureHashes;
 static string const g_argVersion = g_strVersion;
 static string const g_stdinFileName = g_stdinFileNameStr;
 static string const g_argMetadataLiteral = g_strMetadataLiteral;
+static string const g_argStandardJSON = g_strStandardJSON;
 
 /// Possible arguments to for --combined-json
 static set<string> const g_combinedJsonArgs{
@@ -534,6 +537,10 @@ Allowed options)",
 		)
 		(g_argGas.c_str(), "Print an estimate of the maximal gas usage for each function.")
 		(
+			g_argStandardJSON.c_str(),
+			"Switch to Standard JSON input / output mode, ignoring all options."
+		)
+		(
 			g_argAssemble.c_str(),
 			"Switch to assembly mode, ignoring all options and assumes input is assembly."
 		)
@@ -610,6 +617,22 @@ Allowed options)",
 
 bool CommandLineInterface::processInput()
 {
+	if (m_args.count(g_argStandardJSON))
+	{
+		string input;
+		while (!cin.eof())
+		{
+			string tmp;
+			getline(cin, tmp);
+			input.append(tmp + "\n");
+		}
+		StandardCompiler compiler;
+		string output = compiler.compile(input);
+		cout << "Standard Input JSON: " << input << endl << endl;
+		cout << "Standard Output JSON: " << output << endl;
+		return false;
+	}
+
 	readInputFilesAndConfigureRemappings();
 
 	if (m_args.count(g_argLibraries))
