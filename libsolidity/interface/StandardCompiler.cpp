@@ -163,6 +163,43 @@ Json::Value formatLinkReferences(std::map<size_t, std::string> const& linkRefere
 	return ret;
 }
 
+bool isTargetRequired(Json::Value const& _targets, string const& _target)
+{
+	for (auto const& target: _targets)
+		if (target == _target)
+			return true;
+	return false;
+}
+
+/// TODO: optimise this. Perhaps flatten the structure upfront.
+bool isTargetRequired(Json::Value const& _targets, string const& _file, string const& _contract, string const& _target)
+{
+	if (!_targets.isObject())
+		return false;
+
+	if (_targets[_file].isObject())
+	{
+		if (isTargetRequired(_targets[_file][_contract], _target))
+			return true;
+		if (isTargetRequired(_targets[_file]["*"], _target))
+			return true;
+		if (isTargetRequired(_targets[_file][""], _target))
+			return true;
+	}
+
+	if (_targets["*"].isObject())
+	{
+		if (isTargetRequired(_targets["*"][_contract], _target))
+			return true;
+		if (isTargetRequired(_targets["*"]["*"], _target))
+			return true;
+		if (isTargetRequired(_targets["*"][""], _target))
+			return true;
+	}
+
+	return false;
+}
+
 Json::Value StandardCompiler::compileInternal(Json::Value const& _input)
 {
 	m_compilerStack.reset(false);
