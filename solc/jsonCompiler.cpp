@@ -69,9 +69,10 @@ Json::Value estimateGas(CompilerStack const& _compiler, string const& _contract)
 		creation[0] = estimates["creation"]["executionCost"];
 		creation[1] = estimates["creation"]["codeDepositCost"];
 		output["creation"] = creation;
-	}
-	output["external"] = estimates["external"];
-	output["internal"] = estimates["internal"];
+	} else
+		output["creation"] = Json::objectValue;
+	output["external"] = estimates.get("external", Json::objectValue);
+	output["internal"] = estimates.get("internal", Json::objectValue);
 
 	return output;
 }
